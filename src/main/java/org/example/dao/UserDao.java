@@ -15,10 +15,9 @@ public class UserDao {
             String role
     ) {
         String sql = """
-                INSERT INTO users
-                (username, password, roles, status)
-                VALUES (?, ?, ?, 'PENDING')
-                """;
+            INSERT INTO users (username, password, roles, status)
+            VALUES (?, ?, ?, 'PENDING')
+            """;
 
         try (Connection connection =
                      DatabaseConnection.getConnection();
@@ -29,8 +28,7 @@ public class UserDao {
             statement.setString(2, password);
             statement.setString(3, role);
 
-            statement.executeUpdate();
-            return true;
+            return statement.executeUpdate() == 1;
 
         } catch (SQLException e) {
             System.out.println(
@@ -42,10 +40,12 @@ public class UserDao {
 
     public User login(String username, String password) {
         String sql = """
-                SELECT id, username, password, roles, status
-                FROM users
-                WHERE username = ? AND password = ?
-                """;
+            SELECT id, username, password, roles, status
+            FROM users
+            WHERE username = ?
+              AND password = ?
+              AND status = 'ACTIVE'
+            """;
 
         try (Connection connection =
                      DatabaseConnection.getConnection();

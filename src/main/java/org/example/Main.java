@@ -1,14 +1,35 @@
 package org.example;
 
-import org.example.dao.DatabaseConnection;
-import org.example.ui.MenuUI;
+import org.example.dao.DatabaseInitializer;
+import org.example.dao.UserDao;
+import org.example.ui.Authentication;
+
+import java.sql.SQLException;
+import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
-        DatabaseConnection.initializeDatabase();
+        try {
+            DatabaseInitializer initializer =
+                    new DatabaseInitializer();
 
-        MenuUI menu = new MenuUI();
-        menu.start();
+            initializer.initialize();
+
+            UserDao userDao = new UserDao();
+
+            try (Scanner scanner = new Scanner(System.in)) {
+                Authentication authentication =
+                        new Authentication(userDao, scanner);
+
+                authentication.start();
+            }
+
+        } catch (SQLException e) {
+            System.err.println(
+                    "Database initialization failed: "
+                            + e.getMessage()
+            );
+        }
     }
 }

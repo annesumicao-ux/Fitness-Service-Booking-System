@@ -15,7 +15,6 @@
     </properties>
 
     <dependencies>
-        <!-- SQLite Database Driver -->
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
@@ -25,7 +24,6 @@
 
     <build>
         <plugins>
-            <!-- Java Compiler -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -34,8 +32,6 @@
                     <release>26</release>
                 </configuration>
             </plugin>
-
-            <!-- Run the Main Class -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
