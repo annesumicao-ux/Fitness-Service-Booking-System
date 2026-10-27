@@ -75,12 +75,14 @@ public class Authentication {
             System.out.println("Invalid role.");
             return;
         }
+
         if (userDao.register(username, password, role)) {
             System.out.println("Registration successful!");
             System.out.println("Role: " + role);
             System.out.println("Status: PENDING");
         }
     }
+
     private void login() {
         System.out.println("\n--- LOGIN ---");
 
@@ -98,14 +100,17 @@ public class Authentication {
             );
             return;
         }
+
         System.out.println("Login successful!");
         System.out.println("Welcome, " + user.username() + "!");
         System.out.println("Role: " + user.roles());
 
-        switch (user.roles()) {
+        switch (user.roles().toUpperCase()) {
             case "ADMINISTRATOR" -> {
-                AdminMenu adminMenu = new AdminMenu(userDao, scanner);
-                adminMenu.start();}
+                AdminMenu adminMenu =
+                        new AdminMenu(userDao, scanner, user);
+                adminMenu.start();
+            }
             case "RECEPTIONIST" ->
                     System.out.println("Receptionist menu selected.");
             case "STAFF" ->
@@ -113,9 +118,9 @@ public class Authentication {
             default ->
                     System.out.println("Unknown role.");
         }
-        System.out.println("Returned to the main menu.");
 
-        System.out.println("Press Enter to log out.");
+        System.out.println("Returned to the main menu.");
+        System.out.println("Press Enter to continue.");
         scanner.nextLine();
 
         System.out.println("Logged out successfully.");

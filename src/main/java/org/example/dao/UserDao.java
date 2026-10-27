@@ -22,11 +22,12 @@ public class UserDao {
                 """;
 
         try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+             PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
 
             statement.setString(1, username);
             statement.setString(2, password);
-            statement.setString(3, role);
+            statement.setString(3, role.trim().toUpperCase());
 
             return statement.executeUpdate() == 1;
 
@@ -46,7 +47,8 @@ public class UserDao {
                 """;
 
         try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+             PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
 
             statement.setString(1, username);
             statement.setString(2, password);
@@ -69,6 +71,7 @@ public class UserDao {
 
         return null;
     }
+
     public List<User> getAllUsers() {
         List<User> users = new ArrayList<>();
 
@@ -79,7 +82,8 @@ public class UserDao {
                 """;
 
         try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql);
+             PreparedStatement statement =
+                     connection.prepareStatement(sql);
              ResultSet result = statement.executeQuery()) {
 
             while (result.next()) {
@@ -110,7 +114,8 @@ public class UserDao {
                 """;
 
         try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql);
+             PreparedStatement statement =
+                     connection.prepareStatement(sql);
              ResultSet result = statement.executeQuery()) {
 
             while (result.next()) {
@@ -141,7 +146,8 @@ public class UserDao {
                 """;
 
         try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+             PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
 
             statement.setInt(1, userId);
 
@@ -149,6 +155,36 @@ public class UserDao {
 
         } catch (SQLException e) {
             System.out.println("Failed to approve user: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean updateUserRoleAndStatus(
+            int userId,
+            String newRole,
+            String newStatus
+    ) {
+        String sql = """
+                UPDATE users
+                SET roles = ?, status = ?
+                WHERE id = ?
+                """;
+
+        String role = newRole.trim().toUpperCase();
+        String status = newStatus.trim().toUpperCase();
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.setString(1, role);
+            statement.setString(2, status);
+            statement.setInt(3, userId);
+
+            return statement.executeUpdate() == 1;
+
+        } catch (SQLException e) {
+            System.out.println("Failed to update user: " + e.getMessage());
             return false;
         }
     }
