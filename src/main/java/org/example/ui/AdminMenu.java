@@ -66,7 +66,7 @@ public class AdminMenu {
 
     private void printTable(List<User> users) {
         String border =
-                "----------------------------------------------------------------";
+                "---------------------------------------------------------------";
 
         System.out.println(border);
         System.out.printf(
@@ -171,7 +171,7 @@ public class AdminMenu {
             return;
         }
 
-        // Prevent editing the currently logged-in admin.
+        // Security: prevent editing the active admin account.
         if (userId == currentAdmin.id()) {
             System.out.println(
                     "WARNING: Modifying the currently active admin account is restricted."
@@ -216,7 +216,7 @@ public class AdminMenu {
         String confirmation;
 
         while (true) {
-            System.out.print("Proceed? (Y/N): ");
+            System.out.print("Proceed? (Y/N or 0 to cancel): ");
             confirmation = scanner.nextLine().trim();
 
             if (confirmation.equalsIgnoreCase("Y")
@@ -239,10 +239,12 @@ public class AdminMenu {
 
         if (userDao.updateUserRoleAndStatus(
                 userId, newRole, newStatus)) {
+
             System.out.println(
                     "SUCCESS: User ID " + userId
                             + " role and status updated successfully!"
             );
+
         } else {
             System.out.println(
                     "Update failed. Please check the database."
@@ -271,9 +273,9 @@ public class AdminMenu {
     private String readValidRole() {
         while (true) {
             System.out.println("\nAvailable roles:");
-            System.out.println("1. ADMINISTRATOR");
-            System.out.println("2. RECEPTIONIST");
-            System.out.println("3. STAFF");
+            System.out.println("1. STUDENT");
+            System.out.println("2. TEACHER");
+            System.out.println("3. ADMIN");
             System.out.print("Enter new role (or 0 to cancel): ");
 
             String input = scanner.nextLine().trim();
@@ -284,14 +286,14 @@ public class AdminMenu {
 
             String role = input.toUpperCase();
 
-            if (role.equals("ADMINISTRATOR")
-                    || role.equals("RECEPTIONIST")
-                    || role.equals("STAFF")) {
+            if (role.equals("STUDENT")
+                    || role.equals("TEACHER")
+                    || role.equals("ADMIN")) {
                 return role;
             }
 
             System.out.println(
-                    "Invalid role. Enter ADMINISTRATOR, RECEPTIONIST, or STAFF."
+                    "Invalid role. Enter STUDENT, TEACHER, or ADMIN."
             );
         }
     }
