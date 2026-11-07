@@ -23,9 +23,11 @@ public class AdminMenu {
     }
 
     public void start() {
+
         boolean running = true;
 
         while (running) {
+
             System.out.println("\n==================================");
             System.out.println("       ADMINISTRATOR MENU");
             System.out.println("==================================");
@@ -33,27 +35,41 @@ public class AdminMenu {
             System.out.println("2. View Pending Registrations");
             System.out.println("3. Approve User Account");
             System.out.println("4. Update User Role and Status");
+            System.out.println("5. Delete User Account");
             System.out.println("0. Logout");
 
             int choice = readIntInput("Enter choice: ");
 
             switch (choice) {
-                case 1 -> displayUsers(userDao.getAllUsers());
-                case 2 -> displayUsers(userDao.getPendingUsers());
-                case 3 -> approveAccount();
-                case 4 -> updateUser();
+
+                case 1 ->
+                        displayUsers(userDao.getAllUsers());
+
+                case 2 ->
+                        displayUsers(userDao.getPendingUsers());
+
+                case 3 ->
+                        approveAccount();
+
+                case 4 ->
+                        updateUser();
+
                 case 0 -> {
                     running = false;
                     System.out.println("Administrator logged out.");
                 }
-                default -> System.out.println(
-                        "Invalid choice. Please enter 0 to 4."
-                );
+
+                default ->
+                        System.out.println(
+                                "Invalid choice. Please enter 0 to 4."
+                        );
             }
         }
     }
 
+    // Display users
     private void displayUsers(List<User> users) {
+
         System.out.println();
 
         if (users.isEmpty()) {
@@ -64,18 +80,23 @@ public class AdminMenu {
         printTable(users);
     }
 
+    // Print user table
     private void printTable(List<User> users) {
+
         String border =
                 "---------------------------------------------------------------";
 
         System.out.println(border);
+
         System.out.printf(
                 "%-5s %-20s %-20s %-12s%n",
                 "ID", "USERNAME", "ROLE", "STATUS"
         );
+
         System.out.println(border);
 
         for (User user : users) {
+
             System.out.printf(
                     "%-5d %-20s %-20s %-12s%n",
                     user.id(),
@@ -89,6 +110,7 @@ public class AdminMenu {
     }
 
     private String shorten(String value, int maxLength) {
+
         if (value == null) {
             return "";
         }
@@ -100,11 +122,15 @@ public class AdminMenu {
         return value;
     }
 
+    // Approve user account
     private void approveAccount() {
+
         List<User> pendingUsers = userDao.getPendingUsers();
 
         if (pendingUsers.isEmpty()) {
-            System.out.println("There are no pending registrations.");
+            System.out.println(
+                    "There are no pending registrations."
+            );
             return;
         }
 
@@ -135,18 +161,25 @@ public class AdminMenu {
             return;
         }
 
-        if (userDao.approveUser(userId)) {
+        // Pass the current administrator ID for activity logging
+        if (userDao.approveUser(userId, currentAdmin.id())) {
+
             System.out.println(
-                    "SUCCESS: User ID " + userId + " has been approved!"
+                    "SUCCESS: User ID " + userId +
+                            " has been approved!"
             );
+
         } else {
+
             System.out.println(
                     "Approval failed. Please check the database."
             );
         }
     }
 
+    // Update user role and status
     private void updateUser() {
+
         List<User> users = userDao.getAllUsers();
 
         if (users.isEmpty()) {
@@ -171,11 +204,13 @@ public class AdminMenu {
             return;
         }
 
-        // Security: prevent editing the active admin account.
+        // Prevent modifying the active admin account
         if (userId == currentAdmin.id()) {
+
             System.out.println(
                     "WARNING: Modifying the currently active admin account is restricted."
             );
+
             return;
         }
 
@@ -189,9 +224,18 @@ public class AdminMenu {
             return;
         }
 
-        System.out.println("Selected username: " + targetUser.username());
-        System.out.println("Current role: " + targetUser.roles());
-        System.out.println("Current status: " + targetUser.status());
+        System.out.println(
+                "Selected username: " + targetUser.username()
+        );
+
+        System.out.println(
+                "Current role: " + targetUser.roles()
+        );
+
+        System.out.println(
+                "Current status: " + targetUser.status()
+        );
+
         System.out.println("Enter 0 at any prompt to cancel.");
 
         String newRole = readValidRole();
@@ -216,7 +260,11 @@ public class AdminMenu {
         String confirmation;
 
         while (true) {
-            System.out.print("Proceed? (Y/N or 0 to cancel): ");
+
+            System.out.print(
+                    "Proceed? (Y/N or 0 to cancel): "
+            );
+
             confirmation = scanner.nextLine().trim();
 
             if (confirmation.equalsIgnoreCase("Y")
@@ -237,32 +285,45 @@ public class AdminMenu {
             return;
         }
 
+        // Pass admin ID for activity logging
         if (userDao.updateUserRoleAndStatus(
-                userId, newRole, newStatus)) {
+                userId,
+                newRole,
+                newStatus,
+                currentAdmin.id()
+        )) {
 
             System.out.println(
-                    "SUCCESS: User ID " + userId
-                            + " role and status updated successfully!"
+                    "SUCCESS: User ID " + userId +
+                            " role and status updated successfully!"
             );
 
         } else {
+
             System.out.println(
                     "Update failed. Please check the database."
             );
         }
 
         System.out.println("\n--- UPDATED USER LIST ---");
+
         displayUsers(userDao.getAllUsers());
     }
 
+    // Validate integer input
     private int readIntInput(String prompt) {
+
         while (true) {
+
             System.out.print(prompt);
+
             String input = scanner.nextLine().trim();
 
             try {
                 return Integer.parseInt(input);
+
             } catch (NumberFormatException e) {
+
                 System.out.println(
                         "Invalid input. Please enter a whole number."
                 );
@@ -270,13 +331,19 @@ public class AdminMenu {
         }
     }
 
+    // Validate user role
     private String readValidRole() {
+
         while (true) {
+
             System.out.println("\nAvailable roles:");
-            System.out.println("1. STUDENT");
-            System.out.println("2. TEACHER");
-            System.out.println("3. ADMIN");
-            System.out.print("Enter new role (or 0 to cancel): ");
+            System.out.println("1. ADMINISTRATOR");
+            System.out.println("2. RECEPTIONIST");
+            System.out.println("3. STAFF");
+
+            System.out.print(
+                    "Enter new role (or 0 to cancel): "
+            );
 
             String input = scanner.nextLine().trim();
 
@@ -284,26 +351,35 @@ public class AdminMenu {
                 return null;
             }
 
-            String role = input.toUpperCase();
+            String role = switch (input) {
+                case "1" -> "ADMINISTRATOR";
+                case "2" -> "RECEPTIONIST";
+                case "3" -> "STAFF";
+                default -> null;
+            };
 
-            if (role.equals("STUDENT")
-                    || role.equals("TEACHER")
-                    || role.equals("ADMIN")) {
+            if (role != null) {
                 return role;
             }
 
             System.out.println(
-                    "Invalid role. Enter STUDENT, TEACHER, or ADMIN."
+                    "Invalid role. Please enter 1, 2, or 3."
             );
         }
     }
 
+    // Validate user status
     private String readValidStatus() {
+
         while (true) {
+
             System.out.println("\nAvailable statuses:");
             System.out.println("1. APPROVED");
             System.out.println("2. PENDING");
-            System.out.print("Enter new status (or 0 to cancel): ");
+
+            System.out.print(
+                    "Enter new status (or 0 to cancel): "
+            );
 
             String input = scanner.nextLine().trim();
 
@@ -311,15 +387,18 @@ public class AdminMenu {
                 return null;
             }
 
-            String status = input.toUpperCase();
+            String status = switch (input) {
+                case "1" -> "APPROVED";
+                case "2" -> "PENDING";
+                default -> null;
+            };
 
-            if (status.equals("APPROVED")
-                    || status.equals("PENDING")) {
+            if (status != null) {
                 return status;
             }
 
             System.out.println(
-                    "Invalid status. Enter APPROVED or PENDING."
+                    "Invalid status. Please enter 1 or 2."
             );
         }
     }

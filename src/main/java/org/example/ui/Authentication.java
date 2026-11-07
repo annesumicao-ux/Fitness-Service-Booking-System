@@ -1,24 +1,35 @@
 package org.example.ui;
 
 import org.example.dao.UserDao;
+import org.example.dao.ActivityLogDao;
 import org.example.model.User;
 
 import java.util.Scanner;
+import java.sql.SQLException;
 
 public class Authentication {
 
     private final UserDao userDao;
+    private final ActivityLogDao activityLogDao;
     private final Scanner scanner;
 
-    public Authentication(UserDao userDao, Scanner scanner) {
+    public Authentication(
+            UserDao userDao,
+            ActivityLogDao activityLogDao,
+            Scanner scanner
+    ) {
         this.userDao = userDao;
+        this.activityLogDao = activityLogDao;
         this.scanner = scanner;
     }
 
+    // Main authentication menu
     public void start() {
+
         boolean running = true;
 
         while (running) {
+
             System.out.println("\n==================================");
             System.out.println(" FITNESS SERVICE BOOKING SYSTEM");
             System.out.println("==================================");
@@ -30,19 +41,25 @@ public class Authentication {
             String choice = scanner.nextLine().trim();
 
             switch (choice) {
+
                 case "1" -> register();
+
                 case "2" -> login();
+
                 case "3" -> {
                     running = false;
                     System.out.println("Application closed.");
                 }
+
                 default ->
                         System.out.println("Invalid choice. Try again.");
             }
         }
     }
 
+    // Register account
     private void register() {
+
         System.out.println("\n--- REGISTER ACCOUNT ---");
 
         System.out.print("Enter username: ");
@@ -56,7 +73,7 @@ public class Authentication {
             return;
         }
 
-        System.out.println("Select role:");
+        System.out.println("\nSelect role:");
         System.out.println("1. Administrator");
         System.out.println("2. Receptionist");
         System.out.println("3. Staff");
@@ -77,13 +94,37 @@ public class Authentication {
         }
 
         if (userDao.register(username, password, role)) {
+
             System.out.println("Registration successful!");
             System.out.println("Role: " + role);
             System.out.println("Status: PENDING");
+
+            // Record registration activity
+            User registeredUser =
+                    userDao.findByUsername(username);
+
+            if (registeredUser != null) {
+
+                recordActivity(
+                        registeredUser.id(),
+                        "REGISTER",
+                        "New account registered: "
+                                + username
+                                + " with role " + role
+                );
+            }
+
+        } else {
+
+            System.out.println(
+                    "Registration failed. Username may already exist."
+            );
         }
     }
 
+    // Login account
     private void login() {
+
         System.out.println("\n--- LOGIN ---");
 
         System.out.print("Enter username: ");
@@ -95,34 +136,90 @@ public class Authentication {
         User user = userDao.login(username, password);
 
         if (user == null) {
+
             System.out.println(
                     "Login failed. Check your credentials and account status."
             );
+
             return;
         }
 
-        System.out.println("Login successful!");
+        System.out.println("\nLogin successful!");
         System.out.println("Welcome, " + user.username() + "!");
         System.out.println("Role: " + user.roles());
 
+        // Record login activity
+        recordActivity(
+                user.id(),
+                "LOGIN",
+                user.username() + " logged into the system."
+        );
+
+        // Open menu based on user role
         switch (user.roles().toUpperCase()) {
+
             case "ADMINISTRATOR" -> {
+
                 AdminMenu adminMenu =
                         new AdminMenu(userDao, scanner, user);
+
                 adminMenu.start();
             }
-            case "RECEPTIONIST" ->
-                    System.out.println("Receptionist menu selected.");
-            case "STAFF" ->
-                    System.out.println("Staff menu selected.");
-            default ->
-                    System.out.println("Unknown role.");
+
+            case "RECEPTIONIST" -> {
+
+                System.out.println(
+                        "Receptionist menu selected."
+                );
+            }
+
+            case "STAFF" -> {
+
+                System.out.println(
+                        "Staff menu selected."
+                );
+            }
+
+            default -> {
+
+                System.out.println("Unknown role.");
+            }
         }
 
-        System.out.println("Returned to the main menu.");
-        System.out.println("Press Enter to continue.");
-        scanner.nextLine();
+        // Record logout activity
+        recordActivity(
+                user.id(),
+                "LOGOUT",
+                user.username() + " logged out of the system."
+        );
 
+        System.out.println("\nReturned to the main menu.");
         System.out.println("Logged out successfully.");
+        System.out.println("Press Enter to continue.");
+
+        scanner.nextLine();
+    }
+
+    // Record activity and handle database errors
+    private void recordActivity(
+            int userId,
+            String actionType,
+            String description
+    ) {
+
+        try {
+
+            activityLogDao.logAction(
+                    userId,
+                    actionType,
+                    description
+            );
+
+        } catch (SQLException e) {
+
+            System.out.println(
+                    "Activity logging failed: " + e.getMessage()
+            );
+        }
     }
 }

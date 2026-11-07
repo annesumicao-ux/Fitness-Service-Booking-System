@@ -17,6 +17,7 @@ public class DatabaseInitializer {
             boolean oldTableExists = false;
             String tableSql = null;
 
+            // Check if users table already exists
             try (ResultSet result = statement.executeQuery(
                     "SELECT sql FROM sqlite_master " +
                             "WHERE type = 'table' AND name = 'users'")) {
@@ -27,7 +28,9 @@ public class DatabaseInitializer {
                 }
             }
 
+            // Create users table if it does not exist
             if (!oldTableExists) {
+
                 statement.execute("""
                     CREATE TABLE users (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,10 +45,12 @@ public class DatabaseInitializer {
                     && tableSql.contains("'TEACHER'")
                     && tableSql.contains("'STUDENT'")) {
 
+                // Migrate old users table
                 statement.execute("PRAGMA foreign_keys = OFF");
                 connection.setAutoCommit(false);
 
                 try {
+
                     statement.execute("""
                         CREATE TABLE users_new (
                             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,6 +69,7 @@ public class DatabaseInitializer {
                         """);
 
                     statement.execute("DROP TABLE users");
+
                     statement.execute(
                             "ALTER TABLE users_new RENAME TO users"
                     );
@@ -71,16 +77,37 @@ public class DatabaseInitializer {
                     connection.commit();
 
                 } catch (SQLException e) {
+
                     connection.rollback();
                     throw e;
 
                 } finally {
+
                     connection.setAutoCommit(true);
-                    statement.execute("PRAGMA foreign_keys = ON");
                 }
             }
+
+            // Enable foreign key support
+            statement.execute("PRAGMA foreign_keys = ON");
+
+            // Create activity logs table
+            statement.execute("""
+                CREATE TABLE IF NOT EXISTS activity_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    action_type TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+                    FOREIGN KEY (user_id)
+                    REFERENCES users(id)
+                    ON DELETE CASCADE
+                )
+                """);
+
         }
 
         System.out.println("Database is ready.");
+        System.out.println("Activity Logs table is ready.");
     }
 }
