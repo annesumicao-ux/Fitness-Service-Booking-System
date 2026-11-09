@@ -1,23 +1,30 @@
+
 package org.example.ui;
 
 import org.example.dao.UserDao;
+import org.example.dao.ActivityLogDao;
 import org.example.model.User;
+import org.example.model.ActivityLog;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Scanner;
 
 public class AdminMenu {
 
     private final UserDao userDao;
+    private final ActivityLogDao activityLogDao;
     private final Scanner scanner;
     private final User currentAdmin;
 
     public AdminMenu(
             UserDao userDao,
+            ActivityLogDao activityLogDao,
             Scanner scanner,
             User currentAdmin
     ) {
         this.userDao = userDao;
+        this.activityLogDao = activityLogDao;
         this.scanner = scanner;
         this.currentAdmin = currentAdmin;
     }
@@ -35,7 +42,7 @@ public class AdminMenu {
             System.out.println("2. View Pending Registrations");
             System.out.println("3. Approve User Account");
             System.out.println("4. Update User Role and Status");
-            System.out.println("5. Delete User Account");
+            System.out.println("5. View System Audit Logs");
             System.out.println("0. Logout");
 
             int choice = readIntInput("Enter choice: ");
@@ -54,6 +61,9 @@ public class AdminMenu {
                 case 4 ->
                         updateUser();
 
+                case 5 ->
+                        auditLogMenu();
+
                 case 0 -> {
                     running = false;
                     System.out.println("Administrator logged out.");
@@ -61,7 +71,7 @@ public class AdminMenu {
 
                 default ->
                         System.out.println(
-                                "Invalid choice. Please enter 0 to 4."
+                                "Invalid choice. Please enter 0 to 5."
                         );
             }
         }
@@ -161,7 +171,6 @@ public class AdminMenu {
             return;
         }
 
-        // Pass the current administrator ID for activity logging
         if (userDao.approveUser(userId, currentAdmin.id())) {
 
             System.out.println(
@@ -204,7 +213,6 @@ public class AdminMenu {
             return;
         }
 
-        // Prevent modifying the active admin account
         if (userId == currentAdmin.id()) {
 
             System.out.println(
@@ -285,7 +293,6 @@ public class AdminMenu {
             return;
         }
 
-        // Pass admin ID for activity logging
         if (userDao.updateUserRoleAndStatus(
                 userId,
                 newRole,
@@ -399,6 +406,165 @@ public class AdminMenu {
 
             System.out.println(
                     "Invalid status. Please enter 1 or 2."
+            );
+        }
+    }
+
+    // System Audit Logs Menu
+    private void auditLogMenu() {
+
+        boolean running = true;
+
+        while (running) {
+
+            System.out.println("\n==================================");
+            System.out.println("       SYSTEM AUDIT LOGS");
+            System.out.println("==================================");
+            System.out.println("1. View All System Logs");
+            System.out.println("2. Filter Logs by User ID");
+            System.out.println("3. Clear Historical Logs");
+            System.out.println("0. Back to Administrator Menu");
+
+            int choice = readIntInput("Enter choice: ");
+
+            switch (choice) {
+
+                case 1 ->
+                        viewAllLogs();
+
+                case 2 ->
+                        filterLogsByUserId();
+
+                case 3 ->
+                        clearHistoricalLogs();
+
+                case 0 ->
+                        running = false;
+
+                default ->
+                        System.out.println("Invalid choice.");
+            }
+        }
+    }
+
+    // View all activity logs
+    private void viewAllLogs() {
+
+        try {
+
+            List<ActivityLog> logs = activityLogDao.getAllLogs();
+
+            displayLogs(logs);
+
+        } catch (SQLException e) {
+
+            System.out.println(
+                    "Unable to retrieve activity logs: " + e.getMessage()
+            );
+        }
+    }
+
+    // Filter logs by user ID
+    private void filterLogsByUserId() {
+
+        int userId = readIntInput(
+                "Enter User ID to filter (0 to cancel): "
+        );
+
+        if (userId == 0) {
+            System.out.println("Filtering cancelled.");
+            return;
+        }
+
+        if (userId < 0) {
+            System.out.println("User ID must be positive.");
+            return;
+        }
+
+        try {
+
+            List<ActivityLog> logs =
+                    activityLogDao.getLogsByUserId(userId);
+
+            System.out.println(
+                    "\n--- ACTIVITY LOGS FOR USER ID " + userId + " ---"
+            );
+
+            displayLogs(logs);
+
+        } catch (SQLException e) {
+
+            System.out.println(
+                    "Unable to filter activity logs: " + e.getMessage()
+            );
+        }
+    }
+
+    // Display activity logs in table format
+    private void displayLogs(List<ActivityLog> logs) {
+
+        if (logs.isEmpty()) {
+            System.out.println("No activity logs found.");
+            return;
+        }
+
+        String border =
+                "----------------------------------------------------------------------------------------------------------";
+
+        System.out.println(border);
+
+        System.out.printf(
+                "%-5s | %-8s | %-18s | %-35s | %-20s%n",
+                "ID",
+                "USER ID",
+                "ACTION TYPE",
+                "DESCRIPTION",
+                "TIMESTAMP"
+        );
+
+        System.out.println(border);
+
+        for (ActivityLog log : logs) {
+
+            System.out.printf(
+                    "%-5d | %-8d | %-18s | %-35s | %-20s%n",
+                    log.id(),
+                    log.userId(),
+                    shorten(log.actionType(), 18),
+                    shorten(log.description(), 35),
+                    shorten(log.timestamp(), 20)
+            );
+        }
+
+        System.out.println(border);
+    }
+
+    // Clear historical activity logs
+    private void clearHistoricalLogs() {
+
+        System.out.print(
+                "Are you sure you want to clear all historical logs? (Y/N): "
+        );
+
+        String confirmation = scanner.nextLine().trim();
+
+        if (!confirmation.equalsIgnoreCase("Y")) {
+            System.out.println("Clear operation cancelled.");
+            return;
+        }
+
+        try {
+
+            int deletedRows = activityLogDao.clearAllLogs();
+
+            System.out.println(
+                    deletedRows + " historical log(s) cleared successfully."
+            );
+
+        } catch (SQLException e) {
+
+            System.out.println(
+                    "Unable to clear activity logs: " + e.getMessage()
             );
         }
     }

@@ -35,7 +35,7 @@ public class Authentication {
             System.out.println("==================================");
             System.out.println("1. Register Account");
             System.out.println("2. Login");
-            System.out.println("3. Exit");
+            System.out.println("3. Logout");
             System.out.print("Choose an option: ");
 
             String choice = scanner.nextLine().trim();
@@ -161,8 +161,12 @@ public class Authentication {
             case "ADMINISTRATOR" -> {
 
                 AdminMenu adminMenu =
-                        new AdminMenu(userDao, scanner, user);
-
+                        new AdminMenu(
+                                userDao,
+                                activityLogDao,
+                                scanner,
+                                user
+                        );
                 adminMenu.start();
             }
 
