@@ -92,17 +92,14 @@ public class DatabaseInitializer {
             statement.execute("PRAGMA foreign_keys = ON");
 
             // Create activity logs table
+            // Historical logs remain even if a user is deleted.
             statement.execute("""
                 CREATE TABLE IF NOT EXISTS activity_logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id INTEGER NOT NULL,
                     action_type TEXT NOT NULL,
                     description TEXT NOT NULL,
-                    timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-                    FOREIGN KEY (user_id)
-                    REFERENCES users(id)
-                    ON DELETE CASCADE
+                    timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 )
                 """);
 
